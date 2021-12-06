@@ -203,20 +203,8 @@ wall47 = new component(-1, 0+a, "black",  1, 170,  -1, "wall");
 
 walls2 = [wall47,wall48,wall46,wall45,wall44,wall43,wall42,wall41,wall40,wall39,wall38,wall37,wall36,wall35,wall34,wall33,wall32,wall31,wall30,wall29,wall28,wall27,wall26,wall25,wall24,wall23,wall22,wall21,wall20,wall19,wall18,wall17,wall1,wall2,wall3,wall4,wall5,wall6,wall7,wall8,wall9,wall10,wall11,wall12,wall13,wall14,wall15,wall16]; 
 
-
-console.log(walls1[0].y);
-
 var walls = walls1.concat(walls2);
 
-for(let p = 0; p < walls1.length; p++)
-{
-    console.log(walls1[p].y);
-}
-
-for(let p = 0; p < walls2.length; p++)
-{
-    console.log(walls2[p].y);
-}
 
 boxes = [box1, box2]; 
 
@@ -543,7 +531,6 @@ io.on("connection", function (socket) {
     });
 
     socket.on("disconnect", function (msg) {
-        console.log("!");
         var info = clients.get(socket.id);
         
         console.log(info.id + " " + socket.id + " disconnected");
@@ -572,12 +559,15 @@ io.on("connection", function (socket) {
 
         if(boxes[0].restart && boxes[1].restart)
         {
-            console.log("restart");
+            console.log("Restarting...");
             boxes[0].restart = false;
             boxes[1].restart = false;
             boxes[0] = boxRestart(1);        
             boxes[1] = boxRestart(2);        
+            io.emit("start", {boxes: boxes, walls: walls}); // io.emit sends to all
             io.emit("boxes", { sender: "server", boxes: boxes, walls: walls, text: "Sending boxes from index.js" }); // io.emit sends to all
+
+
         }
         
         

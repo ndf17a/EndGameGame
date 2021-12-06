@@ -85,7 +85,6 @@ $(function () {
 
 		}
 
-		console.log(walls.length)
 		for(let i = 0; i < walls.length; i++)
 		{
 			ctx.fillStyle = walls[i].color;
@@ -136,7 +135,7 @@ $(function () {
 
 	//Controls for the buttons
 	$("#restart").click(function (e) {
-		console.log("res");
+		console.log("restart");
 		socket.emit("restart", {sender: myId});
     })
 
