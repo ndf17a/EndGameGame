@@ -21,10 +21,17 @@ var clients = new Map();
 var clientId = 0;
 
 var boxes;
+var player1 = false;
+var player2 = false;
 
 //when a user gets their id give them a box and put it in the boxes array
 let box1;
 let box2; 
+
+let box1Restart;
+let box2Restart; 
+
+
 
 let wall1; 
 let wall2; 
@@ -410,6 +417,19 @@ function playerEnd(box)
 
 }
 
+function boxRestart(player)
+{
+    if(player==1)
+    {
+        return(new component(30, 0,   "blue",   15, 15, clientId, "box")); 
+    }
+    if(player==2)
+    {
+        return(new component(30, 200,  "red",  15, 15, clientId, "box"));
+    }
+
+}
+
 
 function component(x, y, color, width, height, player, type) {
     this.width = width;
@@ -423,6 +443,7 @@ function component(x, y, color, width, height, player, type) {
     this.boundR = this.x + width;
     this.boundT = this.y;
     this.boundB = this.y + height;
+    this.restart = false;
 
     if(type == "box")
         this.player = player;
@@ -436,15 +457,36 @@ function aKey(aSocket) {
     else return aSocket.id;
 }
 
+var restart = new Array(2);
 io.on("connection", function (socket) {
 
     // remember this socket id
-    clientId += 1;
+    if(!player1)
+    {
+        clientId = 1;
+        player1 = true;
+        boxes[0] = boxRestart(1);        
+        io.emit("boxes", { sender: "server", boxes: boxes, walls: walls, text: "Sending boxes from index.js" }); // io.emit sends to all
+
+    }
+    else if(!player2)
+    {
+        clientId = 2;
+        player2 = true;
+        boxes[1] = boxRestart(2);        
+        io.emit("boxes", { sender: "server", boxes: boxes, walls: walls, text: "Sending boxes from index.js" }); // io.emit sends to all
+
+    }
+    else
+        clientId += 1;
+
+
+    
     // var aKey = socket.handshake.address; // production ok, but testing difficult
     aKey = socket.id;
     clients.set(aKey, { id: clientId });
     console.log("connection: " + socket.id + " clientId: " + clientId + " key: " + aKey );
-    socket.emit("welcome", { id: clientId });
+    socket.emit("welcome", { id: clientId, boxes: boxes });
 
     //console.log(clientId);
     if(clientId > 2)
@@ -456,11 +498,6 @@ io.on("connection", function (socket) {
     //Start the game
     io.emit("start", {boxes: boxes, walls: walls}); // io.emit sends to all
     io.emit("boxes", { sender: "server", boxes: boxes, walls: walls, text: "Sending boxes from index.js" }); // io.emit sends to all
-
-    socket.on("start", function (msg) {
-        io.emit("start", {boxes: boxes, walls: walls}); // io.emit sends to all
-        io.emit("boxes", {boxes: boxes, walls: walls}); // io.emit sends to all
-    });
 
   
     //Game things
@@ -505,16 +542,54 @@ io.on("connection", function (socket) {
         
     });
 
+    socket.on("disconnect", function (msg) {
+        console.log("!");
+        var info = clients.get(socket.id);
+        
+        console.log(info.id + " " + socket.id + " disconnected");
+        if(info.id == 1)
+        {
+            player1 = false;
+        }
+        else if(info.id == 2)
+        {
+            player2 = false;
+        }
+
+    });
+
+    socket.on("restart", function (msg) {
+        console.log(msg.sender);
+        if(msg.sender == 1)
+            boxes[0].restart = true;
+
+        if(msg.sender == 2)
+            boxes[1].restart = true;
+
+        io.emit("restartReady", { sender: "server", boxes: boxes, walls: walls}); // io.emit sends to all
+
+
+
+        if(boxes[0].restart && boxes[1].restart)
+        {
+            console.log("restart");
+            boxes[0].restart = false;
+            boxes[1].restart = false;
+            boxes[0] = boxRestart(1);        
+            boxes[1] = boxRestart(2);        
+            io.emit("boxes", { sender: "server", boxes: boxes, walls: walls, text: "Sending boxes from index.js" }); // io.emit sends to all
+        }
+        
+        
+
+    });
+
 
 
 });
 
 
-io.on("disconnect", function (socket) {
-    console.log(
-	"disconnect from: " + socket.io + "  ip: " + socket.handshake.address
-    );
-});
+
 
 http.listen(port, function () {
     console.log("listening on port " + port);

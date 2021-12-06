@@ -45,22 +45,26 @@ $(function () {
 
 	function updateGameArea() {
 		//controls for arrow keys
-		if (myGameArea.keys && myGameArea.keys[37])  //left
+		if(myId < 3)
 		{
-			socket.emit("boxes", {sender: myId, action: 'left', text: '(' + myId + ') left!'});
+			if (myGameArea.keys && myGameArea.keys[37])  //left
+			{
+				socket.emit("boxes", {sender: myId, action: 'left', text: '(' + myId + ') left!'});
+			}
+			if (myGameArea.keys && myGameArea.keys[39]) //right
+			{
+				socket.emit("boxes", {sender: myId, action: 'right', text: '(' + myId + ') right!'});
+			}
+			if (myGameArea.keys && myGameArea.keys[38]) // up 
+			{
+				socket.emit("boxes", {sender: myId, action: 'up', text: '(' + myId + ') up!'});
+			}
+			if (myGameArea.keys && myGameArea.keys[40]) //down
+			{
+				socket.emit("boxes", {sender: myId, action: 'down', text: '(' + myId + ') down!'});
+			}
 		}
-		if (myGameArea.keys && myGameArea.keys[39]) //right
-		{
-			socket.emit("boxes", {sender: myId, action: 'right', text: '(' + myId + ') right!'});
-		}
-		if (myGameArea.keys && myGameArea.keys[38]) // up 
-		{
-			socket.emit("boxes", {sender: myId, action: 'up', text: '(' + myId + ') up!'});
-		}
-		if (myGameArea.keys && myGameArea.keys[40]) //down
-		{
-			socket.emit("boxes", {sender: myId, action: 'down', text: '(' + myId + ') down!'});
-		}
+		
 
 	}
 	///////////////////
@@ -91,11 +95,20 @@ $(function () {
 			ctx.stroke();
 		}
 
+		for(let i = 0; i < 2; i++)
+		{
+			if(boxes[i].restart)
+			{
+				let str = boxes[i].color + " wants to restart...";
+				ctx.font = "30px Arial";
+				ctx.fillStyle = boxes[i].color;
+				ctx.fillText(str, 10, 195);
+			}
+		}
+
 		
 
-
-	
-
+		
 		if(winner)
 		{
 			let str = winnerColor + " won!";
@@ -121,25 +134,17 @@ $(function () {
 		
 	}
 
-
+	//Controls for the buttons
+	$("#restart").click(function (e) {
+		console.log("res");
+		socket.emit("restart", {sender: myId});
+    })
 
 	
-	//Controls for the buttons
-    $("#left").click(function (e) {
-		socket.emit("boxes", {sender: myId, action: 'left',  text: myId + ' user is asking to go left!'  });
-    })
-	$("#right").click(function (e) {
-		socket.emit("boxes", {sender: myId, action: 'right', text:  myId + ' user is asking to go right!'});
-    })
-	$("#up").click(function (e) {
-		socket.emit("boxes", {sender: myId, action: 'up',    text:  myId + ' user is asking to go up!'   });
-    })
-	$("#down").click(function (e) {
-		socket.emit("boxes", {sender: myId, action: 'down',  text:  myId + ' user is asking to go down!' });
-    })
-	$("#start").click(function (e) {
-		socket.emit("start", {sender: myId, action: 'start' });
-    })
+
+	socket.on("restartReady", function (msg) {
+		draw(msg.boxes, msg.walls, 0);
+    });
 
 	socket.on("start", function (msg) {
 		myGameArea.stop();
@@ -159,14 +164,18 @@ $(function () {
 		
 	});
 
-	socket.on("welcome", function (msg) {
-		console.log(msg);
+	
+
+    socket.on("welcome", function (msg) {
 		myId = msg.id;
+		console.log(msg.id);
+		var c = document.getElementById("p");
+		if(myId > 2 )
+			c.textContent = "You are just viewer (" + myId +  ")";
+		else 
+			c.textContent = "You are player " + msg.id + " (" + msg.boxes[myId-1].color + ")";
+
 		
 	});
-
-    socket.on("connect", function (msg) {
-		console.log("i'm connected...");
-    });
 
 });
