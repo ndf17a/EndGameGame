@@ -9,6 +9,7 @@ $(function () {
 	var ctx = canvas.getContext("2d");
 	var socket = io();
 	var myId = "";
+	var winnerColor = "";
 
 	////////////////////
 
@@ -24,7 +25,7 @@ $(function () {
 			this.context = this.canvas.getContext("2d");
 			document.body.insertBefore(canvas, document.body.childNodes[0]);
 			this.frameNo = 0;
-			this.interval = setInterval(updateGameArea, 20);
+			this.interval = setInterval(updateGameArea, 10);
 			window.addEventListener('keydown', function (e) {
 				e.preventDefault();
 				myGameArea.keys = (myGameArea.keys || []);
@@ -65,7 +66,7 @@ $(function () {
 	///////////////////
 		
 
-	function draw(boxes, walls)
+	function draw(boxes, walls, winner)
 	{
 		ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -77,32 +78,10 @@ $(function () {
 			ctx.fillRect(boxes[i].x, boxes[i].y, boxes[i].width, boxes[i].height);
 			ctx.stroke();
 
-	
-			ctx.strokeStyle = "red"; 
-			ctx.beginPath();
-			ctx.moveTo(boxes[i].Lx, boxes[i].Ly);
-			ctx.lineTo(boxes[i].Lx-1, boxes[i].Ly);
-			ctx.stroke();
 
-			ctx.strokeStyle = "red"; 
-			ctx.beginPath();
-			ctx.moveTo(boxes[i].Rx, boxes[i].Ry);
-			ctx.lineTo(boxes[i].Rx+1, boxes[i].Ry);
-			ctx.stroke();
-
-			ctx.strokeStyle = "red"; 
-			ctx.beginPath();
-			ctx.moveTo(boxes[i].Tx, boxes[i].Ty);
-			ctx.lineTo(boxes[i].Tx, boxes[i].Ty-1);
-			ctx.stroke();
-
-			ctx.strokeStyle = "red"; 
-			ctx.beginPath();
-			ctx.moveTo(boxes[i].Bx, boxes[i].By);
-			ctx.lineTo(boxes[i].Bx, boxes[i].By+1);
-			ctx.stroke();
 		}
 
+		console.log(walls.length)
 		for(let i = 0; i < walls.length; i++)
 		{
 			ctx.fillStyle = walls[i].color;
@@ -110,18 +89,36 @@ $(function () {
 			// x y w h
 			ctx.fillRect(walls[i].x, walls[i].y, walls[i].width, walls[i].height);
 			ctx.stroke();
-
-			//if they are not the tagger give them a black outline else red outline
-			// if(boxes[i].tagger == 0) { ctx.strokeStyle = "black"; }
-			// else { ctx.strokeStyle = "red"; }
-			// ctx.beginPath();
-			// ctx.moveTo(boxes[i].boundL, boxes[i].boundT);
-			// ctx.lineTo(boxes[i].boundL, boxes[i].boundB);
-			// ctx.lineTo(boxes[i].boundR, boxes[i].boundB);
-			// ctx.lineTo(boxes[i].boundR, boxes[i].boundT);
-			// ctx.lineTo(boxes[i].boundL, boxes[i].boundT);
-			// ctx.stroke();
 		}
+
+		
+
+
+	
+
+		if(winner)
+		{
+			let str = winnerColor + " won!";
+			ctx.font = "30px Arial";
+			ctx.fillStyle = winnerColor;
+			ctx.fillText(str, 50, 50);
+
+		}
+		else
+		{
+			ctx.fillStyle = "pink";
+			ctx.beginPath();
+			// x y w h
+			ctx.fillRect(205, 153, 5, 5);
+			ctx.stroke();
+
+			ctx.fillStyle = "pink";
+			ctx.beginPath();
+			// x y w h
+			ctx.fillRect(205, 353, 5, 5);
+			ctx.stroke();
+		}
+		
 	}
 
 
@@ -145,14 +142,22 @@ $(function () {
     })
 
 	socket.on("start", function (msg) {
+		myGameArea.stop();
 		myGameArea.start(msg.boxes);
     });
 
 	//myId goes 1,2
 	socket.on("boxes", function (msg) {
-		draw(msg.boxes, msg.walls);
-
+		draw(msg.boxes, msg.walls, 0);
     });
+
+	socket.on("end", function (msg) {
+		winnerColor = msg.winner;
+		draw(msg.boxes, msg.walls, 1);
+		myGameArea.stop();
+
+		
+	});
 
 	socket.on("welcome", function (msg) {
 		console.log(msg);
