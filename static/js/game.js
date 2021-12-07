@@ -270,8 +270,19 @@ var tag = false;
 		}
 
 		
-		$("#tag").click(function (e) {
-			socket.emit("startTag", {sender: myId, action: 'start' });
+		$("#gameMode").click(function (e) {
+			if(maze)
+			{
+				document.getElementById("gameMode").textContent = "maze";
+				socket.emit("restartTag", {sender: myId, action: 'start' });
+
+			}
+			if(tag)
+			{
+				//document.getElementById("gameMode").textContent = "tag";
+				//socket.emit("restartMaze", {sender: myId, action: 'start' });
+			}
+
 		})
 
 		socket.on("startTag", function (msg) {
