@@ -20,17 +20,120 @@ app.get("/", function (req, res) {
 var clients = new Map();
 var clientId = 0;
 
+var maze = true;
+var tag = false;
+
+////////////////
+var boxesTag;
+var currentTagger = 0;
+var pastTagger = -1;
+var checkTag = 0;
+
+//when a user gets their id give them a box and put it in the boxesTag array
+let box1Tag;
+let box2Tag;
+let box3Tag;
+let box4Tag;
+
+box1Tag = new componentTag(20, 20,   "#5885AF",   40, 40, clientId, 1); 
+box2Tag = new componentTag(440, 20,  "purple",    40, 40, clientId, 0);
+box3Tag = new componentTag(20, 440, "green",  40, 40, clientId, 0); 
+box4Tag = new componentTag(440, 440,  "orange", 40, 40, clientId, 0);
+
+boxesTag = [box1Tag, box2Tag, box3Tag, box4Tag]; 
+
+var interval = setInterval(collisionCheck, 60); 
+
+
+
+function moveLeftTag(box)  { if(box.tagger == 1) { box.x -= 2; } else box.x -= 3.5; setHoriBounds(box); }
+function moveRightTag(box) { if(box.tagger == 1) { box.x += 2; } else box.x += 3.5; setHoriBounds(box); }
+function moveUpTag(box)    { if(box.tagger == 1) { box.y -= 2; } else box.y -= 3.5; setVertBounds(box); }
+function moveDownTag(box)  { if(box.tagger == 1) { box.y += 2; } else box.y += 3.5; setVertBounds(box); }
+
+
+
+function collisionCheck()
+{
+    
+        //checks if the tagger touches any runners
+        let L1 = boxesTag[currentTagger].boundL;
+        let R1 = boxesTag[currentTagger].boundR;
+        let T1 = boxesTag[currentTagger].boundT;
+        let B1 = boxesTag[currentTagger].boundB;
+    
+        for(let i = 0; i < 4; i++)
+        {
+            //if we just tagged someone and this is the iteration of the pastTagger skip
+            //or if this iteration is the current tagger            
+            if((checkTag != 0 && i == pastTagger) || i == currentTagger)
+            {
+                continue; 
+            }
+    
+            let L2 = boxesTag[i].boundL;
+            let R2 = boxesTag[i].boundR;
+            let T2 = boxesTag[i].boundT;
+            let B2 = boxesTag[i].boundB;
+    
+            let LL = L1 >= L2;
+            let LR = L1 <= R2;
+            let TT = T1 >= T2;
+            let TB = T1 <= B2;
+            let BT = B1 >= T2;
+            let BB = B1 <= B2;
+            let RL = R1 >= L2;
+            let RR = R1 <= R2;
+    
+            if(LL && LR && TT && TB || LL && LR && BT && BB || RL && RR && BT &&  BB || RL && RR && TT && TB)
+            {
+                //tagged
+
+                //make checkTag not 0 so collision check doesnt run
+                checkTag++;
+
+                boxesTag[currentTagger].tagger = 0;
+                setHoriBounds(boxesTag[currentTagger]);
+                setVertBounds(boxesTag[currentTagger]);
+                
+                boxesTag[i].tagger = 1;
+                setHoriBounds(boxesTag[i]);
+                setVertBounds(boxesTag[i]);
+                console.log(boxesTag[currentTagger].color + " tagged " + boxesTag[i].color);
+
+                pastTagger = currentTagger;
+                currentTagger = i;
+
+                io.emit("boxesTag", { sender: "server", boxesTag: boxesTag, text: "Sending boxesTag from collisionCheck" }); 
+                break;
+            }
+        }
+
+    //if its not 0
+    if(checkTag != 0) 
+    { 
+        //increment until we hit 15 then make it 0 again 
+        //effectively when someone is tagged wait a secound until we tag them again
+        checkTag += 1;
+        if(checkTag == 10) 
+        {   
+            checkTag = 0; 
+            pastTagger = -1; 
+        }
+        
+    }
+}
+
+///////////////
+//when a user gets their id give them a box and put it in the boxes array
 var boxes;
 var player1 = false;
 var player2 = false;
+var player3 = false;
+var player4 = false;
 
-//when a user gets their id give them a box and put it in the boxes array
 let box1;
 let box2; 
-
-let box1Restart;
-let box2Restart; 
-
 
 
 let wall1; 
@@ -83,62 +186,62 @@ let wall47;
 let wall48; 
 
 
-box1 = new component(30, 0,   "blue",   15, 15, clientId, "box"); 
-box2 = new component(30, 200,  "red",  15, 15, clientId, "box");
+box1 = new componentMaze(30, 0,   "blue",   10, 10, clientId, "box"); 
+box2 = new componentMaze(30, 200,  "red",  10, 10, clientId, "box");
 
 //horizontal walls
-wall1 = new component(15, 15,  "black",   30, 2,  -1, "wall");
-wall3 = new component(72, 15, "black",   72, 2,  -1, "wall");
-wall5 = new component(175, 15, "black",   20, 2,  -1, "wall");
-wall8 = new component(175, 32, "black",   68, 2,  -1, "wall");
-wall12 = new component(30, 35, "black",   60, 2,  -1, "wall");
-wall13 = new component(30, 35, "black",   60, 2,  -1, "wall");
-wall14 = new component(30, 105, "black",  70, 2, -1,  "wall");
-wall15 = new component(50, 85, "black",  70, 2, -1,   "wall");
-wall17 = new component(33, 65, "black",  65, 2, -1, "wall");
-wall18 = new component(55, 130, "black",  120, 2, -1, "wall");
-wall19 = new component(140, 90, "black",  66, 2,  -1, "wall");
-wall20 = new component(160, 110, "black",  43, 2,  -1, "wall");
-wall19 = new component(140, 90, "black",  66, 2,  -1, "wall");
-wall23 = new component(120, 65, "black",  30, 2,  -1, "wall");
-wall25 = new component(0, 165, "black",  260, 2,  -1, "wall");
-wall27 = new component(100, 150, "black",  40, 2,  -1, "wall");
-wall30 = new component(55, 148, "black",  20, 2,  -1, "wall");
-wall31 = new component(145, 32, "black",  30, 2,  -1, "wall");
-wall32 = new component(172, 52, "black",  60, 2,  -1, "wall");
-wall33 = new component(200, 72, "black",  60, 2,  -1, "wall");
-wall38 = new component(200, 130, "black",  40, 2,  -1, "wall");
-wall39 = new component(223, 90, "black",  18, 2,  -1, "wall");
-wall41 = new component(230, 110, "black",  30, 2,  -1, "wall");
-wall43 = new component(200, 147, "black",  40, 2,  -1, "wall");
-wall48 = new component(0, -1, "black",  260, 1,  -1, "wall");
+wall1 = new componentMaze(15, 15,  "black",   30, 2,  -1, "wall");
+wall3 = new componentMaze(72, 15, "black",   72, 2,  -1, "wall");
+wall5 = new componentMaze(175, 15, "black",   20, 2,  -1, "wall");
+wall8 = new componentMaze(175, 32, "black",   68, 2,  -1, "wall");
+wall12 = new componentMaze(30, 35, "black",   60, 2,  -1, "wall");
+wall13 = new componentMaze(30, 35, "black",   60, 2,  -1, "wall");
+wall14 = new componentMaze(30, 105, "black",  70, 2, -1,  "wall");
+wall15 = new componentMaze(50, 85, "black",  70, 2, -1,   "wall");
+wall17 = new componentMaze(33, 65, "black",  65, 2, -1, "wall");
+wall18 = new componentMaze(55, 130, "black",  120, 2, -1, "wall");
+wall19 = new componentMaze(140, 90, "black",  66, 2,  -1, "wall");
+wall20 = new componentMaze(160, 110, "black",  43, 2,  -1, "wall");
+wall19 = new componentMaze(140, 90, "black",  66, 2,  -1, "wall");
+wall23 = new componentMaze(120, 65, "black",  30, 2,  -1, "wall");
+wall25 = new componentMaze(0, 165, "black",  260, 2,  -1, "wall");
+wall27 = new componentMaze(100, 150, "black",  40, 2,  -1, "wall");
+wall30 = new componentMaze(55, 148, "black",  20, 2,  -1, "wall");
+wall31 = new componentMaze(145, 32, "black",  30, 2,  -1, "wall");
+wall32 = new componentMaze(172, 52, "black",  60, 2,  -1, "wall");
+wall33 = new componentMaze(200, 72, "black",  60, 2,  -1, "wall");
+wall38 = new componentMaze(200, 130, "black",  40, 2,  -1, "wall");
+wall39 = new componentMaze(223, 90, "black",  18, 2,  -1, "wall");
+wall41 = new componentMaze(230, 110, "black",  30, 2,  -1, "wall");
+wall43 = new componentMaze(200, 147, "black",  40, 2,  -1, "wall");
+wall48 = new componentMaze(0, -1, "black",  260, 1,  -1, "wall");
 
 
 //vertical walls
-wall2 = new component(45,  0, "black",  2, 17,  -1, "wall");
-wall4 = new component(220, 0, "black",  2, 16,  -1, "wall");
-wall6 = new component(175, 15, "black", 2, 18,  -1, "wall");
-wall7 = new component(120, 15, "black",  2, 24, -1, "wall");
-wall9 = new component(260, 0, "black",  2, 167,  -1, "wall");
-wall10 = new component(70, 15, "black",  2, 20,  -1, "wall");
-wall11 = new component(30, 55, "black",  2, 95,  -1, "wall");
-wall16 = new component(120, 65, "black",  2, 66,  -1, "wall");
-wall21 = new component(140, 90, "black",  2, 20,  -1, "wall");
-wall22 = new component(172, 52, "black",  2, 40,  -1, "wall");
-wall24 = new component(175, 130, "black",  2, 10,  -1, "wall");
-wall26 = new component(100, 150, "black",  2, 17,  -1, "wall");
-wall28 = new component(120, 130, "black",  2, 20,  -1, "wall");
-wall29 = new component(55, 132, "black",  2, 18,  -1, "wall");
-wall34 = new component(240, 15, "black",  2, 18,  -1, "wall");
-wall35 = new component(200, 34, "black",  2, 18,  -1, "wall");
-wall36 = new component(60, 52, "black",  2, 15,  -1, "wall");
-wall37 = new component(170, 112, "black",  2, 20,  -1, "wall");
-wall40 = new component(230, 90, "black",  2, 40,  -1, "wall");
-wall42 = new component(200, 147, "black",  2, 18,  -1, "wall");
-wall44 = new component(70, 85, "black",  2, 20,  -1, "wall");
-wall45 = new component(140, 50, "black",  2, 17,  -1, "wall");
-wall46 = new component(160, 150, "black",  2, 15,  -1, "wall");
-wall47 = new component(-1, 0, "black",  1, 170,  -1, "wall");
+wall2 = new componentMaze(45,  0, "black",  2, 17,  -1, "wall");
+wall4 = new componentMaze(220, 0, "black",  2, 16,  -1, "wall");
+wall6 = new componentMaze(175, 15, "black", 2, 18,  -1, "wall");
+wall7 = new componentMaze(120, 15, "black",  2, 24, -1, "wall");
+wall9 = new componentMaze(260, 0, "black",  2, 167,  -1, "wall");
+wall10 = new componentMaze(70, 15, "black",  2, 20,  -1, "wall");
+wall11 = new componentMaze(30, 55, "black",  2, 95,  -1, "wall");
+wall16 = new componentMaze(120, 65, "black",  2, 66,  -1, "wall");
+wall21 = new componentMaze(140, 90, "black",  2, 20,  -1, "wall");
+wall22 = new componentMaze(172, 52, "black",  2, 40,  -1, "wall");
+wall24 = new componentMaze(175, 130, "black",  2, 10,  -1, "wall");
+wall26 = new componentMaze(100, 150, "black",  2, 17,  -1, "wall");
+wall28 = new componentMaze(120, 130, "black",  2, 20,  -1, "wall");
+wall29 = new componentMaze(55, 132, "black",  2, 18,  -1, "wall");
+wall34 = new componentMaze(240, 15, "black",  2, 18,  -1, "wall");
+wall35 = new componentMaze(200, 34, "black",  2, 18,  -1, "wall");
+wall36 = new componentMaze(60, 52, "black",  2, 15,  -1, "wall");
+wall37 = new componentMaze(170, 112, "black",  2, 20,  -1, "wall");
+wall40 = new componentMaze(230, 90, "black",  2, 40,  -1, "wall");
+wall42 = new componentMaze(200, 147, "black",  2, 18,  -1, "wall");
+wall44 = new componentMaze(70, 85, "black",  2, 20,  -1, "wall");
+wall45 = new componentMaze(140, 50, "black",  2, 17,  -1, "wall");
+wall46 = new componentMaze(160, 150, "black",  2, 15,  -1, "wall");
+wall47 = new componentMaze(-1, 0, "black",  1, 170,  -1, "wall");
 
 
 
@@ -148,58 +251,58 @@ var walls2;
 
 walls1 = [wall47,wall48,wall46,wall45,wall44,wall43,wall42,wall41,wall40,wall39,wall38,wall37,wall36,wall35,wall34,wall33,wall32,wall31,wall30,wall29,wall28,wall27,wall26,wall25,wall24,wall23,wall22,wall21,wall20,wall19,wall18,wall17,wall1,wall2,wall3,wall4,wall5,wall6,wall7,wall8,wall9,wall10,wall11,wall12,wall13,wall14,wall15,wall16]; 
 var a = 200;
-wall1 = new component(15, 15+a,  "black",   30, 2,  -1, "wall");
-wall3 = new component(72, 15+a, "black",   72, 2,  -1, "wall");
-wall5 = new component(175, 15+a, "black",   20, 2,  -1, "wall");
-wall8 = new component(175, 32+a, "black",   68, 2,  -1, "wall");
-wall12 = new component(30, 35+a, "black",   60, 2,  -1, "wall");
-wall13 = new component(30, 35+a, "black",   60, 2,  -1, "wall");
-wall14 = new component(30, 105+a, "black",  70, 2, -1,  "wall");
-wall15 = new component(50, 85+a, "black",  70, 2, -1,   "wall");
-wall17 = new component(33, 65+a, "black",  65, 2, -1, "wall");
-wall18 = new component(55, 130+a, "black",  120, 2, -1, "wall");
-wall19 = new component(140, 90+a, "black",  66, 2,  -1, "wall");
-wall20 = new component(160, 110+a, "black",  43, 2,  -1, "wall");
-wall19 = new component(140, 90+a, "black",  66, 2,  -1, "wall");
-wall23 = new component(120, 65+a, "black",  30, 2,  -1, "wall");
-wall25 = new component(0, 165+a, "black",  260, 2,  -1, "wall");
-wall27 = new component(100, 150+a, "black",  40, 2,  -1, "wall");
-wall30 = new component(55, 148+a, "black",  20, 2,  -1, "wall");
-wall31 = new component(145, 32+a, "black",  30, 2,  -1, "wall");
-wall32 = new component(172, 52+a, "black",  60, 2,  -1, "wall");
-wall33 = new component(200, 72+a, "black",  60, 2,  -1, "wall");
-wall38 = new component(200, 130+a, "black",  40, 2,  -1, "wall");
-wall39 = new component(223, 90+a, "black",  18, 2,  -1, "wall");
-wall41 = new component(230, 110+a, "black",  30, 2,  -1, "wall");
-wall43 = new component(200, 147+a, "black",  40, 2,  -1, "wall");
-wall48 = new component(0, -1+a, "black",  260, 1,  -1, "wall");
+wall1 = new componentMaze(15, 15+a,  "black",   30, 2,  -1, "wall");
+wall3 = new componentMaze(72, 15+a, "black",   72, 2,  -1, "wall");
+wall5 = new componentMaze(175, 15+a, "black",   20, 2,  -1, "wall");
+wall8 = new componentMaze(175, 32+a, "black",   68, 2,  -1, "wall");
+wall12 = new componentMaze(30, 35+a, "black",   60, 2,  -1, "wall");
+wall13 = new componentMaze(30, 35+a, "black",   60, 2,  -1, "wall");
+wall14 = new componentMaze(30, 105+a, "black",  70, 2, -1,  "wall");
+wall15 = new componentMaze(50, 85+a, "black",  70, 2, -1,   "wall");
+wall17 = new componentMaze(33, 65+a, "black",  65, 2, -1, "wall");
+wall18 = new componentMaze(55, 130+a, "black",  120, 2, -1, "wall");
+wall19 = new componentMaze(140, 90+a, "black",  66, 2,  -1, "wall");
+wall20 = new componentMaze(160, 110+a, "black",  43, 2,  -1, "wall");
+wall19 = new componentMaze(140, 90+a, "black",  66, 2,  -1, "wall");
+wall23 = new componentMaze(120, 65+a, "black",  30, 2,  -1, "wall");
+wall25 = new componentMaze(0, 165+a, "black",  260, 2,  -1, "wall");
+wall27 = new componentMaze(100, 150+a, "black",  40, 2,  -1, "wall");
+wall30 = new componentMaze(55, 148+a, "black",  20, 2,  -1, "wall");
+wall31 = new componentMaze(145, 32+a, "black",  30, 2,  -1, "wall");
+wall32 = new componentMaze(172, 52+a, "black",  60, 2,  -1, "wall");
+wall33 = new componentMaze(200, 72+a, "black",  60, 2,  -1, "wall");
+wall38 = new componentMaze(200, 130+a, "black",  40, 2,  -1, "wall");
+wall39 = new componentMaze(223, 90+a, "black",  18, 2,  -1, "wall");
+wall41 = new componentMaze(230, 110+a, "black",  30, 2,  -1, "wall");
+wall43 = new componentMaze(200, 147+a, "black",  40, 2,  -1, "wall");
+wall48 = new componentMaze(0, -1+a, "black",  260, 1,  -1, "wall");
 
 
 //vertical walls
-wall2 = new component(45,  0+a, "black",  2, 17,  -1, "wall");
-wall4 = new component(220, 0+a, "black",  2, 16,  -1, "wall");
-wall6 = new component(175, 15+a, "black", 2, 18,  -1, "wall");
-wall7 = new component(120, 15+a, "black",  2, 24, -1, "wall");
-wall9 = new component(260, 0+a, "black",  2, 167,  -1, "wall");
-wall10 = new component(70, 15+a, "black",  2, 20,  -1, "wall");
-wall11 = new component(30, 55+a, "black",  2, 95,  -1, "wall");
-wall16 = new component(120, 65+a, "black",  2, 66,  -1, "wall");
-wall21 = new component(140, 90+a, "black",  2, 20,  -1, "wall");
-wall22 = new component(172, 52+a, "black",  2, 40,  -1, "wall");
-wall24 = new component(175, 130+a, "black",  2, 10,  -1, "wall");
-wall26 = new component(100, 150+a, "black",  2, 17,  -1, "wall");
-wall28 = new component(120, 130+a, "black",  2, 20,  -1, "wall");
-wall29 = new component(55, 132+a, "black",  2, 18,  -1, "wall");
-wall34 = new component(240, 15+a, "black",  2, 18,  -1, "wall");
-wall35 = new component(200, 34+a, "black",  2, 18,  -1, "wall");
-wall36 = new component(60, 52+a, "black",  2, 15,  -1, "wall");
-wall37 = new component(170, 112+a, "black",  2, 20,  -1, "wall");
-wall40 = new component(230, 90+a, "black",  2, 40,  -1, "wall");
-wall42 = new component(200, 147+a, "black",  2, 18,  -1, "wall");
-wall44 = new component(70, 85+a, "black",  2, 20,  -1, "wall");
-wall45 = new component(140, 50+a, "black",  2, 17,  -1, "wall");
-wall46 = new component(160, 150+a, "black",  2, 15,  -1, "wall");
-wall47 = new component(-1, 0+a, "black",  1, 170,  -1, "wall");
+wall2 = new componentMaze(45,  0+a, "black",  2, 17,  -1, "wall");
+wall4 = new componentMaze(220, 0+a, "black",  2, 16,  -1, "wall");
+wall6 = new componentMaze(175, 15+a, "black", 2, 18,  -1, "wall");
+wall7 = new componentMaze(120, 15+a, "black",  2, 24, -1, "wall");
+wall9 = new componentMaze(260, 0+a, "black",  2, 167,  -1, "wall");
+wall10 = new componentMaze(70, 15+a, "black",  2, 20,  -1, "wall");
+wall11 = new componentMaze(30, 55+a, "black",  2, 95,  -1, "wall");
+wall16 = new componentMaze(120, 65+a, "black",  2, 66,  -1, "wall");
+wall21 = new componentMaze(140, 90+a, "black",  2, 20,  -1, "wall");
+wall22 = new componentMaze(172, 52+a, "black",  2, 40,  -1, "wall");
+wall24 = new componentMaze(175, 130+a, "black",  2, 10,  -1, "wall");
+wall26 = new componentMaze(100, 150+a, "black",  2, 17,  -1, "wall");
+wall28 = new componentMaze(120, 130+a, "black",  2, 20,  -1, "wall");
+wall29 = new componentMaze(55, 132+a, "black",  2, 18,  -1, "wall");
+wall34 = new componentMaze(240, 15+a, "black",  2, 18,  -1, "wall");
+wall35 = new componentMaze(200, 34+a, "black",  2, 18,  -1, "wall");
+wall36 = new componentMaze(60, 52+a, "black",  2, 15,  -1, "wall");
+wall37 = new componentMaze(170, 112+a, "black",  2, 20,  -1, "wall");
+wall40 = new componentMaze(230, 90+a, "black",  2, 40,  -1, "wall");
+wall42 = new componentMaze(200, 147+a, "black",  2, 18,  -1, "wall");
+wall44 = new componentMaze(70, 85+a, "black",  2, 20,  -1, "wall");
+wall45 = new componentMaze(140, 50+a, "black",  2, 17,  -1, "wall");
+wall46 = new componentMaze(160, 150+a, "black",  2, 15,  -1, "wall");
+wall47 = new componentMaze(-1, 0+a, "black",  1, 170,  -1, "wall");
 
 walls2 = [wall47,wall48,wall46,wall45,wall44,wall43,wall42,wall41,wall40,wall39,wall38,wall37,wall36,wall35,wall34,wall33,wall32,wall31,wall30,wall29,wall28,wall27,wall26,wall25,wall24,wall23,wall22,wall21,wall20,wall19,wall18,wall17,wall1,wall2,wall3,wall4,wall5,wall6,wall7,wall8,wall9,wall10,wall11,wall12,wall13,wall14,wall15,wall16]; 
 
@@ -208,13 +311,13 @@ var walls = walls1.concat(walls2);
 
 boxes = [box1, box2]; 
 
-//var interval = setInterval(collisionCheck, 60);    
 var speed = 1;  
 function moveLeft(box)  { if(box.canMoveL) { box.x -= speed; setHoriBounds(box); } }
 function moveRight(box) { if(box.canMoveR) { box.x += speed; setHoriBounds(box); } }
 function moveUp(box)    { if(box.canMoveU) { box.y -= speed; setVertBounds(box); } }
 function moveDown(box)  { if(box.canMoveB) { box.y += speed; setVertBounds(box); } }
 
+//in both
 function setHoriBounds(box)
 {
     box.boundL = box.x;
@@ -407,19 +510,53 @@ function playerEnd(box)
 
 function boxRestart(player)
 {
-    if(player==1)
+    if(maze)
     {
-        return(new component(30, 0,   "blue",   15, 15, clientId, "box")); 
+        console.log("boxRestartMaze")
+        if(player==1)
+        {
+            return(new componentMaze(30, 0,   "blue",   10, 10, clientId, "box")); 
+        }
+        if(player==2)
+        {
+            return(new componentMaze(30, 200,  "red",  10, 10, clientId, "box"));
+        }
     }
-    if(player==2)
+
+    
+
+    if(tag)
     {
-        return(new component(30, 200,  "red",  15, 15, clientId, "box"));
+
+        box1Tag = new componentTag(20, 20,   "#5885AF",   40, 40, clientId, boxesTag[0].tagger); 
+        box2Tag = new componentTag(440, 20,  "purple",    40, 40, clientId, boxesTag[1].tagger);
+        box3Tag = new componentTag(20, 440, "green",  40, 40, clientId, boxesTag[2].tagger); 
+        box4Tag = new componentTag(440, 440,  "orange", 40, 40, clientId, boxesTag[3].tagger);
+
+        console.log("boxRestartTag")
+        if(player==1)
+        {
+            return(box1Tag); 
+        }
+        if(player==2)
+        {
+            return(box2Tag);
+        }
+        if(player==3)
+        {
+            return(box3Tag); 
+        }
+        if(player==4)
+        {
+            return(box4Tag);
+        }
     }
+    
 
 }
 
 
-function component(x, y, color, width, height, player, type) {
+function componentMaze(x, y, color, width, height, player, type) {
     this.width = width;
     this.height = height;
     this.speed = 0;
@@ -440,63 +577,80 @@ function component(x, y, color, width, height, player, type) {
 
 }
 
+function componentTag(x, y, color, width, height, player, tagger) {
+    this.width = width;
+    this.height = height;
+    this.speed = 0;
+    this.x = x;
+    this.y = y;    
+    this.color = color;
+    this.player = player;
+    this.tagger = tagger;
+    this.boundL = this.x;
+    this.boundR = this.x + width;
+    this.boundT = this.y;
+    this.boundB = this.y + height;
+    this.restart = false;
+
+}
+
 function aKey(aSocket) {
     if (production) return aSocket.handshake.address;
     else return aSocket.id;
 }
 
-var restart = new Array(2);
 io.on("connection", function (socket) {
 
-    // remember this socket id
-    if(!player1)
-    {
-        clientId = 1;
-        player1 = true;
-        boxes[0] = boxRestart(1);        
-        io.emit("boxes", { sender: "server", boxes: boxes, walls: walls, text: "Sending boxes from index.js" }); // io.emit sends to all
+    if(maze)
+    {    
+        // remember this socket id
+        if(!player1)
+        {
+            clientId = 1;
+            player1 = true;
+            boxes[0] = boxRestart(1);        
+            io.emit("boxesMaze", { sender: "server", boxes: boxes, walls: walls, text: "Sending boxes from index.js" }); // io.emit sends to all
+
+        }
+        else if(!player2)
+        {
+            clientId = 2;
+            player2 = true;
+            boxes[1] = boxRestart(2);        
+            io.emit("boxesMaze", { sender: "server", boxes: boxes, walls: walls, text: "Sending boxes from index.js" }); // io.emit sends to all
+        }
+        else
+            clientId += 1;
+
+        // var aKey = socket.handshake.address; // production ok, but testing difficult
+        aKey = socket.id;
+        clients.set(aKey, { id: clientId });
+        console.log("connection: " + socket.id + " clientId: " + clientId + " key: " + aKey );
+        socket.emit("welcomeMaze", { id: clientId, boxes: boxes });
+
+        //console.log(clientId);
+        if(clientId > 2)
+        {
+            //dont let the do anything 
+            boxes.push(new componentMaze(0, 0,  "", 0, 0, clientId, 0));
+        }
+
+        //Start the game
+        io.emit("startMaze", {boxes: boxes, walls: walls}); // io.emit sends to all
+        io.emit("boxesMaze", { sender: "server", boxes: boxes, walls: walls, text: "Sending boxes from index.js" }); // io.emit sends to all
 
     }
-    else if(!player2)
-    {
-        clientId = 2;
-        player2 = true;
-        boxes[1] = boxRestart(2);        
-        io.emit("boxes", { sender: "server", boxes: boxes, walls: walls, text: "Sending boxes from index.js" }); // io.emit sends to all
-
-    }
-    else
-        clientId += 1;
 
 
-    
-    // var aKey = socket.handshake.address; // production ok, but testing difficult
-    aKey = socket.id;
-    clients.set(aKey, { id: clientId });
-    console.log("connection: " + socket.id + " clientId: " + clientId + " key: " + aKey );
-    socket.emit("welcome", { id: clientId, boxes: boxes });
-
-    //console.log(clientId);
-    if(clientId > 2)
-    {
-        //dont let the do anything 
-        boxes.push(new component(0, 0,  "", 0, 0, clientId, 0));
-    }
-
-    //Start the game
-    io.emit("start", {boxes: boxes, walls: walls}); // io.emit sends to all
-    io.emit("boxes", { sender: "server", boxes: boxes, walls: walls, text: "Sending boxes from index.js" }); // io.emit sends to all
-
-  
     //Game things
-    socket.on("boxes", function (msg) {
+    socket.on("boxesMaze", function (msg) {
         var info = clients.get(socket.id);
         var id = info.id;
 
         if(playerEnd(boxes[id-1]))
         {
             let c = boxes[id-1].color;
-            io.emit("end", {boxes: boxes, walls: walls, winner: c});
+            io.emit("endMaze", {boxes: boxes, walls: walls, winner: c});
         }
         else 
         {
@@ -524,7 +678,7 @@ io.on("connection", function (socket) {
                 moveDown(boxes[id-1]);
             }
 
-            io.emit("boxes", { sender: "server", boxes: boxes, walls: walls, text: "Sending boxes from index.js" }); // io.emit sends to all
+            io.emit("boxesMaze", { sender: "server", boxes: boxes, walls: walls, text: "Sending boxes from index.js" }); // io.emit sends to all
         }
 
         
@@ -533,7 +687,7 @@ io.on("connection", function (socket) {
     socket.on("disconnect", function (msg) {
         var info = clients.get(socket.id);
         
-        console.log(info.id + " " + socket.id + " disconnected");
+        console.log(info.id + " disconnected");
         if(info.id == 1)
         {
             player1 = false;
@@ -543,9 +697,22 @@ io.on("connection", function (socket) {
             player2 = false;
         }
 
+        if(tag)
+        {
+            if(info.id == 3)
+            {
+                player3 = false;
+            }
+            else if(info.id == 4)
+            {
+                player4 = false;
+            }
+        }
+
+
     });
 
-    socket.on("restart", function (msg) {
+    socket.on("restartMaze", function (msg) {
         console.log(msg.sender);
         if(msg.sender == 1)
             boxes[0].restart = true;
@@ -553,9 +720,7 @@ io.on("connection", function (socket) {
         if(msg.sender == 2)
             boxes[1].restart = true;
 
-        io.emit("restartReady", { sender: "server", boxes: boxes, walls: walls}); // io.emit sends to all
-
-
+        io.emit("restartReadyMaze", { sender: "server", boxes: boxes, walls: walls}); // io.emit sends to all
 
         if(boxes[0].restart && boxes[1].restart)
         {
@@ -564,22 +729,134 @@ io.on("connection", function (socket) {
             boxes[1].restart = false;
             boxes[0] = boxRestart(1);        
             boxes[1] = boxRestart(2);        
-            io.emit("start", {boxes: boxes, walls: walls}); // io.emit sends to all
-            io.emit("boxes", { sender: "server", boxes: boxes, walls: walls, text: "Sending boxes from index.js" }); // io.emit sends to all
-
-
+            io.emit("startMaze", { boxes: boxes, walls: walls}); // io.emit sends to all
+            io.emit("boxesMaze", { sender: "server", boxes: boxes, walls: walls, text: "Sending boxes from index.js" }); // io.emit sends to all
         }
-        
-        
-
     });
 
+    socket.on("restartTag", function (msg) {
+        console.log(msg.sender, " is ready to restart");
+        boxesTag[msg.sender-1].restart = true;
+        let r = 0;
+        for(let i = 0; i < 3; i++)
+        {
+            if(boxesTag[i].restart)
+                r++;   
+        }
 
+        if(r >= 3)
+        {
+            console.log("Restarting...");
+            for(let i = 0; i < 3; i++)
+            {
+                boxesTag[i].restart = false;   
+            }
+
+            boxesTag[0] = boxRestart(1);        
+            boxesTag[1] = boxRestart(2);        
+            boxesTag[2] = boxRestart(3);        
+            boxesTag[3] = boxRestart(4);        
+            io.emit("startTag", { boxesTag: boxesTag}); // io.emit sends to all
+        }
+
+        io.emit("boxesTag", { sender: "server", boxesTag: boxesTag, text: "Sending boxes from index.js" }); // io.emit sends to all
+
+        
+    });
+
+    
+    if(tag)
+    {
+
+        if(!player1)
+        {
+            clientId = 1;
+            player1 = true;
+            boxesTag[0] = boxRestart(1);        
+            io.emit("boxesTag", { sender: "server", boxesTag: boxesTag, text: "Sending boxes from index.js" }); // io.emit sends to all
+
+        }
+        else if(!player2)
+        {
+            clientId = 2;
+            player2 = true;
+            boxesTag[1] = boxRestart(2);        
+            io.emit("boxesTag", { sender: "server", boxesTag: boxesTag, text: "Sending boxes from index.js" }); // io.emit sends to all
+        }
+        else if(!player3)
+        {
+            clientId = 3;
+            player3 = true;
+            boxesTag[2] = boxRestart(3);        
+            io.emit("boxesTag", { sender: "server", boxesTag: boxesTag, text: "Sending boxes from index.js" }); // io.emit sends to all
+        }
+        else if(!player4)
+        {
+            clientId = 4;
+            player4 = true;
+            boxesTag[3] = boxRestart(4);        
+            io.emit("boxesTag", { sender: "server", boxesTag: boxesTag, text: "Sending boxes from index.js" }); // io.emit sends to all
+        }
+        else
+            clientId += 1;
+
+        //console.log(clientId);
+        if(clientId > 4)
+        {
+            //dont let them do anything 
+            boxesTag.push(new componentTag(0, 0,  "white", 0, 0, clientId, 0));
+        }
+
+        aKey = socket.id;
+        clients.set(aKey, { id: clientId });
+        console.log("connection: " + socket.id + " clientId: " + clientId + " key: " + aKey );
+        socket.emit("welcomeTag", { id: clientId, boxesTag: boxesTag });
+
+        //Start the game
+        io.emit("startTag", {boxesTag: boxesTag}); // io.emit sends to all
+        console.log("Starting Tag2" + boxesTag[0].color + " !");
+        io.emit("boxesTag", { sender: "server", boxesTag: boxesTag, text: "Sending boxesTag from index.js" }); // io.emit sends to all
+    
+    
+    }
+
+    socket.on("startTag", function (msg) {
+        tag = true;
+        maze = false;
+        io.emit("startTag", {boxesTag: boxesTag}); // io.emit sends to all
+        io.emit("boxesTag", {boxesTag: boxesTag}); // io.emit sends to all
+    });
+
+  
+    //Game things
+    socket.on("boxesTag", function (msg) {
+        var info = clients.get(socket.id);
+        var id = info.id;
+
+        if(msg.action == "left")
+        {
+            moveLeftTag(boxesTag[id-1]);
+        }
+
+        if(msg.action == "right")
+        {
+            moveRightTag(boxesTag[id-1]);
+        }
+
+        if(msg.action == "up")
+        {
+            moveUpTag(boxesTag[id-1]);
+        }
+
+        if(msg.action == "down")
+        {
+            moveDownTag(boxesTag[id-1]);
+        }
+
+        io.emit("boxesTag", { sender: "server", boxesTag: boxesTag, text: "Sending boxesTag from index.js" }); // io.emit sends to all
+    });
 
 });
-
-
-
 
 http.listen(port, function () {
     console.log("listening on port " + port);
