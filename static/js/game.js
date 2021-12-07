@@ -274,7 +274,7 @@ var tag = false;
 			if(maze)
 			{
 				document.getElementById("gameMode").textContent = "maze";
-				socket.emit("restartTag", {sender: myId, action: 'start' });
+				socket.emit("startTag", {sender: myId, action: 'start' });
 
 			}
 			if(tag)
