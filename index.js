@@ -747,7 +747,7 @@ io.on("connection", function (socket) {
         if(r >= 3)
         {
             console.log("Restarting...");
-            for(let i = 0; i < 3; i++)
+            for(let i = 0; i < 4; i++)
             {
                 boxesTag[i].restart = false;   
             }
