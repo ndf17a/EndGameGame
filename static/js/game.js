@@ -3,8 +3,8 @@
 // socket.io example for 2 clients and keyboard events
 //
 $(function () {
-var maze = true;
-var tag = false;
+	var maze = true;
+	var tag = false;
 
 	let  canvas = document.getElementById("canvas");
 	let  ctx = canvas.getContext("2d");
@@ -41,10 +41,10 @@ var tag = false;
 	}
 
 
-	
 		
+			
 	function updateGameArea() {
-		//controls for arrow keys
+			//controls for arrow keys
 
 		if(myId < 3 && maze)
 		{
@@ -92,232 +92,234 @@ var tag = false;
 		///////////////////
 			
 
-		function drawMaze(boxes, walls, winner)
+	function drawMaze(boxes, walls, winner)
+	{
+		ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+		for(let i = 0; i < 2; i++)
 		{
-			ctx.clearRect(0, 0, canvas.width, canvas.height);
+			ctx.fillStyle = boxes[i].color;
+			ctx.beginPath();
+			// x y w h
+			ctx.fillRect(boxes[i].x, boxes[i].y, boxes[i].width, boxes[i].height);
+			ctx.stroke();
 
-			for(let i = 0; i < 2; i++)
+
+		}
+
+		for(let i = 0; i < walls.length; i++)
+		{
+			ctx.fillStyle = walls[i].color;
+			ctx.beginPath();
+			// x y w h
+			ctx.fillRect(walls[i].x, walls[i].y, walls[i].width, walls[i].height);
+			ctx.stroke();
+		}
+
+		for(let i = 0; i < 2; i++)
+		{
+			if(boxes[i].restart)
 			{
-				ctx.fillStyle = boxes[i].color;
-				ctx.beginPath();
-				// x y w h
-				ctx.fillRect(boxes[i].x, boxes[i].y, boxes[i].width, boxes[i].height);
-				ctx.stroke();
-
-
-			}
-
-			for(let i = 0; i < walls.length; i++)
-			{
-				ctx.fillStyle = walls[i].color;
-				ctx.beginPath();
-				// x y w h
-				ctx.fillRect(walls[i].x, walls[i].y, walls[i].width, walls[i].height);
-				ctx.stroke();
-			}
-
-			for(let i = 0; i < 2; i++)
-			{
-				if(boxes[i].restart)
-				{
-					let str = boxes[i].color + " wants to restart...";
-					ctx.font = "30px Arial";
-					ctx.fillStyle = boxes[i].color;
-					ctx.fillText(str, 10, 195);
-				}
-			}
-
-			if(winner)
-			{
-				let str = winnerColor + " won!";
+				let str = boxes[i].color + " wants to restart...";
 				ctx.font = "30px Arial";
-				ctx.fillStyle = winnerColor;
-				ctx.fillText(str, 50, 50);
+				ctx.fillStyle = boxes[i].color;
+				ctx.fillText(str, 10, 195);
+			}
+		}
 
+		console.log("Winner", winner)
+		if(winner)
+		{
+			let str = winnerColor + " won!";
+			ctx.font = "30px Arial";
+			ctx.fillStyle = winnerColor;
+			ctx.fillText(str, 290, 190);
+
+		}
+		
+
+		//draw the two end goal dots
+		ctx.fillStyle = "gold";
+		ctx.beginPath();
+		// x y w h
+		ctx.fillRect(205, 153, 5, 5);
+		ctx.stroke();
+
+		ctx.fillStyle = "gold";
+		ctx.beginPath();
+		// x y w h
+		ctx.fillRect(205, 353, 5, 5);
+		ctx.stroke();
+		
+		
+					
+	}
+
+	//Controls for the buttons
+	$("#restart").click(function (e) {
+		console.log("restart");
+		if(maze)
+			socket.emit("restartMaze", {sender: myId});
+		if(tag)
+			socket.emit("restartTag", {sender: myId});
+
+	})
+
+		
+
+	socket.on("restartReadyMaze", function (msg) {
+		drawMaze(msg.boxes, msg.walls, 0);
+	});
+
+
+
+	socket.on("startMaze", function (msg) {
+		myGameArea.stop();
+		maze = true;
+		tag = false;
+		myGameArea.start(msg.boxes);
+	});
+
+	//myId goes 1,2
+	socket.on("boxesMaze", function (msg) {
+		maze = true;
+		tag = false;
+		drawMaze(msg.boxes, msg.walls, 0);
+	});
+
+	socket.on("endMaze", function (msg) {
+		winnerColor = msg.winner;
+		drawMaze(msg.boxes, msg.walls, 1);
+		myGameArea.stop();
+	});
+
+	socket.on("welcomeMaze", function (msg) {
+		myId = msg.id;
+		console.log(msg.id);
+		let  c = document.getElementById("p");
+
+		if(myId > 2 )
+			c.textContent = "You are just viewer (" + myId +  ")";
+		else 
+			c.textContent = "You are player " + msg.id + " (" + msg.boxes[myId-1].color + ")";
+
+			
+	});
+	
+
+	///////////////////
+			
+
+	function drawboxesTag(boxes)
+	{
+		ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+		for(let i = 0; i < 4; i++)
+		{
+			ctx.fillStyle = boxes[i].color;
+			ctx.beginPath();
+			// x y w h
+			ctx.fillRect(boxes[i].x, boxes[i].y, boxes[i].width, boxes[i].height);
+			ctx.stroke();
+
+			//if they are not the tagger give them a black outline else red outline
+			if(boxes[i].tagger == 0) { ctx.strokeStyle = "black"; }
+			else { ctx.strokeStyle = "#FF0000"; }
+			ctx.beginPath();
+			ctx.moveTo(boxes[i].boundL, boxes[i].boundT);
+			ctx.lineTo(boxes[i].boundL, boxes[i].boundB);
+			ctx.lineTo(boxes[i].boundR, boxes[i].boundB);
+			ctx.lineTo(boxes[i].boundR, boxes[i].boundT);
+			ctx.lineTo(boxes[i].boundL, boxes[i].boundT);
+			ctx.stroke();
+
+			if(boxes[i].tagger == 0) { ctx.strokeStyle = "black"; }
+			else { ctx.strokeStyle = "#FF0000"; }
+			ctx.beginPath();
+			ctx.moveTo(boxes[i].boundL+10, boxes[i].boundT+10);
+			ctx.lineTo(boxes[i].boundL+10, boxes[i].boundB-10);
+			ctx.lineTo(boxes[i].boundR-10, boxes[i].boundB-10);
+			ctx.lineTo(boxes[i].boundR-10, boxes[i].boundT+10);
+			ctx.lineTo(boxes[i].boundL+10, boxes[i].boundT+10);
+			ctx.stroke();
+
+			let str = "" + (i+1);
+			if(myId == i+1)
+			{
+				ctx.fillStyle = "white";
+				ctx.font = "20px Arial";
+				ctx.fillText(str, boxes[i].boundL+14, boxes[i].boundT+28);
 			}
 			else
 			{
-				ctx.fillStyle = "pink";
-				ctx.beginPath();
-				// x y w h
-				ctx.fillRect(205, 153, 5, 5);
-				ctx.stroke();
-
-				ctx.fillStyle = "pink";
-				ctx.beginPath();
-				// x y w h
-				ctx.fillRect(205, 353, 5, 5);
-				ctx.stroke();
+				ctx.fillStyle = "black";
+				ctx.font = "10px Arial";
+				ctx.fillText(str, boxes[i].boundL+17, boxes[i].boundT+24);
 			}
-			
+				
+			if(boxes[i].restart)
+			{
+				console.log("restartfromdraw");
+				let a = i + 1 + " wants to restart...";
+				ctx.fillStyle = "black";
+				ctx.font = "10px Arial";
+				ctx.fillText(a, boxes[i].boundL-10, boxes[i].boundB+10);
+			}
+				
 		}
 
-		//Controls for the buttons
-		$("#restart").click(function (e) {
-			console.log("restart");
-			if(maze)
-				socket.emit("restartMaze", {sender: myId});
-			if(tag)
-				socket.emit("restartTag", {sender: myId});
-
-
-		})
+			
+	}
 
 		
-
-		socket.on("restartReadyMaze", function (msg) {
-			drawMaze(msg.boxes, msg.walls, 0);
-		});
-
-
-
-		socket.on("startMaze", function (msg) {
-			myGameArea.stop();
-			maze = true;
-			tag = false;
-			myGameArea.start(msg.boxes);
-		});
-
-		//myId goes 1,2
-		socket.on("boxesMaze", function (msg) {
-			drawMaze(msg.boxes, msg.walls, 0);
-		});
-
-		socket.on("endMaze", function (msg) {
-			winnerColor = msg.winner;
-			drawMaze(msg.boxes, msg.walls, 1);
-			myGameArea.stop();
-
-			
-		});
-
-		socket.on("welcomeMaze", function (msg) {
-			myId = msg.id;
-			console.log(msg.id);
-			let  c = document.getElementById("p");
-
-			if(myId > 2 )
-				c.textContent = "You are just viewer (" + myId +  ")";
-			else 
-				c.textContent = "You are player " + msg.id + " (" + msg.boxes[myId-1].color + ")";
-
-			
-		});
-	
-
-		///////////////////
-			
-
-		function drawboxesTag(boxes)
+	$("#gameMode").click(function (e) {
+		if(maze)
 		{
-			ctx.clearRect(0, 0, canvas.width, canvas.height);
+			document.getElementById("gameMode").textContent = "SwitchGame";
+			socket.emit("startTag", {sender: myId, action: 'start' });
 
-			for(let i = 0; i < 4; i++)
-			{
-				ctx.fillStyle = boxes[i].color;
-				ctx.beginPath();
-				// x y w h
-				ctx.fillRect(boxes[i].x, boxes[i].y, boxes[i].width, boxes[i].height);
-				ctx.stroke();
-
-				//if they are not the tagger give them a black outline else red outline
-				if(boxes[i].tagger == 0) { ctx.strokeStyle = "black"; }
-				else { ctx.strokeStyle = "#FF0000"; }
-				ctx.beginPath();
-				ctx.moveTo(boxes[i].boundL, boxes[i].boundT);
-				ctx.lineTo(boxes[i].boundL, boxes[i].boundB);
-				ctx.lineTo(boxes[i].boundR, boxes[i].boundB);
-				ctx.lineTo(boxes[i].boundR, boxes[i].boundT);
-				ctx.lineTo(boxes[i].boundL, boxes[i].boundT);
-				ctx.stroke();
-
-				if(boxes[i].tagger == 0) { ctx.strokeStyle = "black"; }
-				else { ctx.strokeStyle = "#FF0000"; }
-				ctx.beginPath();
-				ctx.moveTo(boxes[i].boundL+10, boxes[i].boundT+10);
-				ctx.lineTo(boxes[i].boundL+10, boxes[i].boundB-10);
-				ctx.lineTo(boxes[i].boundR-10, boxes[i].boundB-10);
-				ctx.lineTo(boxes[i].boundR-10, boxes[i].boundT+10);
-				ctx.lineTo(boxes[i].boundL+10, boxes[i].boundT+10);
-				ctx.stroke();
-
-				let str = "" + (i+1);
-				if(myId == i+1)
-				{
-					ctx.fillStyle = "white";
-					ctx.font = "20px Arial";
-					ctx.fillText(str, boxes[i].boundL+14, boxes[i].boundT+28);
-				}
-				else
-				{
-					ctx.fillStyle = "black";
-					ctx.font = "10px Arial";
-					ctx.fillText(str, boxes[i].boundL+17, boxes[i].boundT+24);
-				}
-				
-				if(boxes[i].restart)
-				{
-					console.log("restartfromdraw");
-					let a = i + 1 + " wants to restart...";
-					ctx.fillStyle = "black";
-					ctx.font = "10px Arial";
-					ctx.fillText(a, boxes[i].boundL-10, boxes[i].boundB+10);
-				}
-				
-			}
-
-			
+		}
+		if(tag)
+		{
+			document.getElementById("gameMode").textContent = "SwitchGame";
+			socket.emit("startMaze", {sender: myId, action: 'start' });
 		}
 
-		
-		$("#gameMode").click(function (e) {
-			if(maze)
-			{
-				document.getElementById("gameMode").textContent = "maze";
-				socket.emit("startTag", {sender: myId, action: 'start' });
+	})
 
-			}
-			if(tag)
-			{
-				//document.getElementById("gameMode").textContent = "tag";
-				//socket.emit("restartMaze", {sender: myId, action: 'start' });
-			}
+	socket.on("startTag", function (msg) {
+		myGameArea.stop();
+		tag = true;
+		maze = false;
+		console.log("starting tag");
+		myGameArea.start(msg.boxes);
+	});
 
-		})
+	//myId goes 1,2,3,4
+	socket.on("boxesTag", function (msg) {
+		drawboxesTag(msg.boxesTag);
+	});
 
-		socket.on("startTag", function (msg) {
-			myGameArea.stop();
-			tag = true;
-			maze = false;
-			console.log("starting tag");
-			myGameArea.start(msg.boxes);
-		});
+	socket.on("restartReadyTag", function (msg) {
+		drawboxesTag(msg.boxesTag);
+	});
 
-		//myId goes 1,2,3,4
-		socket.on("boxesTag", function (msg) {
-			drawboxesTag(msg.boxesTag);
-		});
-
-		socket.on("restartReadyTag", function (msg) {
-			drawboxesTag(msg.boxesTag);
-		});
-
-		socket.on("welcomeTag", function (msg) {
-			myId = msg.id;
-			console.log(msg.id);
-			let  c = document.getElementById("p");
-			if(myId > 4 )
-				c.textContent = "You are just viewer (" + myId +  ")";
-			else 
-				c.textContent = "You are player " + msg.id + " (" + msg.boxesTag[myId-1].color + ")";
+	socket.on("welcomeTag", function (msg) {
+		myId = msg.id;
+		console.log(msg.id);
+		let  c = document.getElementById("p");
+		if(myId > 4 )
+			c.textContent = "You are just viewer (" + myId +  ")";
+		else 
+			c.textContent = "You are player " + msg.id + " (" + msg.boxesTag[myId-1].color + ")";
 
 			
-		});
+	});
 
 		
-		socket.on("connect", function (msg) {
-			console.log("i'm connected...");
-		});
+	socket.on("connect", function (msg) {
+		console.log("i'm connected...");
+	});
 	
 	
 

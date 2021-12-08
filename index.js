@@ -35,7 +35,7 @@ let box2Tag;
 let box3Tag;
 let box4Tag;
 
-box1Tag = new componentTag(20, 20,   "#5885AF",   40, 40, clientId, 1); 
+box1Tag = new componentTag(20, 20,   "blue",   40, 40, clientId, 1); 
 box2Tag = new componentTag(440, 20,  "purple",    40, 40, clientId, 0);
 box3Tag = new componentTag(20, 440, "green",  40, 40, clientId, 0); 
 box4Tag = new componentTag(440, 440,  "orange", 40, 40, clientId, 0);
@@ -44,12 +44,66 @@ boxesTag = [box1Tag, box2Tag, box3Tag, box4Tag];
 
 var interval = setInterval(collisionCheck, 60); 
 
+function moveLeftTag(box) { 
 
+    if(box.boundL >= 0)
+    {
+        if(box.tagger == 1) 
+        { 
+            box.x -= 2; 
+        } 
+        else 
+            box.x -= 3.5; 
 
-function moveLeftTag(box)  { if(box.tagger == 1) { box.x -= 2; } else box.x -= 3.5; setHoriBounds(box); }
-function moveRightTag(box) { if(box.tagger == 1) { box.x += 2; } else box.x += 3.5; setHoriBounds(box); }
-function moveUpTag(box)    { if(box.tagger == 1) { box.y -= 2; } else box.y -= 3.5; setVertBounds(box); }
-function moveDownTag(box)  { if(box.tagger == 1) { box.y += 2; } else box.y += 3.5; setVertBounds(box); }
+        setHoriBounds(box); 
+    }
+    
+}
+
+function moveRightTag(box) {
+
+    if(box.boundR <= 500)
+    {
+        if(box.tagger == 1) 
+        { 
+            box.x += 2; 
+        } 
+        else 
+            box.x += 3.5; 
+
+        setHoriBounds(box); 
+    }
+}
+
+function moveUpTag(box) {
+
+    if(box.boundT >= 0)
+    {
+        if(box.tagger == 1) 
+        { 
+            box.y -= 2; 
+        } 
+        else 
+            box.y -= 3.5; 
+
+        setVertBounds(box); 
+    }
+}
+
+function moveDownTag(box) {
+
+    if(box.boundB <= 500)
+    {
+        if(box.tagger == 1) 
+        { 
+            box.y += 2; 
+        } 
+        else 
+            box.y += 3.5; 
+
+        setVertBounds(box); 
+    }
+}
 
 
 
@@ -187,7 +241,7 @@ let wall48;
 
 
 box1 = new componentMaze(30, 0,   "blue",   10, 10, clientId, "box"); 
-box2 = new componentMaze(30, 200,  "red",  10, 10, clientId, "box");
+box2 = new componentMaze(30, 200,  "purple",  10, 10, clientId, "box");
 
 //horizontal walls
 wall1 = new componentMaze(15, 15,  "black",   30, 2,  -1, "wall");
@@ -519,7 +573,7 @@ function boxRestart(player)
         }
         if(player==2)
         {
-            return(new componentMaze(30, 200,  "red",  10, 10, clientId, "box"));
+            return(new componentMaze(30, 200,  "purple",  10, 10, clientId, "box"));
         }
     }
 
@@ -528,7 +582,7 @@ function boxRestart(player)
     if(tag)
     {
 
-        box1Tag = new componentTag(20, 20,   "#5885AF",   40, 40, clientId, boxesTag[0].tagger); 
+        box1Tag = new componentTag(20, 20,   "blue",   40, 40, clientId, boxesTag[0].tagger); 
         box2Tag = new componentTag(440, 20,  "purple",    40, 40, clientId, boxesTag[1].tagger);
         box3Tag = new componentTag(20, 440, "green",  40, 40, clientId, boxesTag[2].tagger); 
         box4Tag = new componentTag(440, 440,  "orange", 40, 40, clientId, boxesTag[3].tagger);
@@ -677,11 +731,11 @@ io.on("connection", function (socket) {
                 collisionCheckBottom(boxes[id-1]);
                 moveDown(boxes[id-1]);
             }
+            io.emit("boxesMaze", {boxes: boxes, walls: walls});
 
-            io.emit("boxesMaze", { sender: "server", boxes: boxes, walls: walls, text: "Sending boxes from index.js" }); // io.emit sends to all
         }
 
-        
+
     });
 
     socket.on("disconnect", function (msg) {
@@ -696,20 +750,31 @@ io.on("connection", function (socket) {
         {
             player2 = false;
         }
-
-        if(tag)
+        else if(info.id == 3)
         {
-            if(info.id == 3)
-            {
-                player3 = false;
-            }
-            else if(info.id == 4)
-            {
-                player4 = false;
-            }
+            player3 = false;
         }
+        else if(info.id == 4)
+        {
+            player4 = false;
+        }
+        
+    
+    });
 
-
+    socket.on("startMaze", function (msg) {
+        console.log(msg.sender, " is ready to restart");
+        
+        maze = true;
+        tag = false;
+        boxes[0] = boxRestart(1);
+        boxes[1] = boxRestart(2);
+         
+    
+        //Start the game
+        io.emit("startMaze", {boxes: boxes, walls: walls}); // io.emit sends to all
+        io.emit("boxesMaze", { sender: "server", boxes: boxes, walls: walls, text: "Sending boxes from index.js" }); // io.emit sends to all
+        
     });
 
     socket.on("restartMaze", function (msg) {
@@ -760,11 +825,9 @@ io.on("connection", function (socket) {
         }
 
         io.emit("boxesTag", { sender: "server", boxesTag: boxesTag, text: "Sending boxes from index.js" }); // io.emit sends to all
-
         
     });
 
-    
     if(tag)
     {
 
@@ -826,7 +889,6 @@ io.on("connection", function (socket) {
         io.emit("startTag", {boxesTag: boxesTag}); // io.emit sends to all
         io.emit("boxesTag", {boxesTag: boxesTag}); // io.emit sends to all
     });
-
   
     //Game things
     socket.on("boxesTag", function (msg) {
@@ -861,5 +923,7 @@ io.on("connection", function (socket) {
 http.listen(port, function () {
     console.log("listening on port " + port);
 });
+
+
 
 
