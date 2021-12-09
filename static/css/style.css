@@ -1,53 +1,67 @@
-* {
-  margin: 10;
-  padding: 0;
-  box-sizing: border-box;
+canvas {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  width: 40%;
 }
-#game {
-  margin: 10px;
-  padding: 10px;
-  background: #ffffff;
-  border: thin inset #aaaaaa;
+
+p {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  width: 20%;
+  font-size: 45px;
+  font-weight: bold;
 }
-.column {
-  float: left;
-  width: 25%;
-}
-.row:after {
-  content: "";
-  display: table;
-  clear: both;
-}
-body {
-  font: 13px Helvetica, Arial;
-}
-form {
-  background: #000;
-  padding: 3px;
-  position: fixed;
-  bottom: 0;
-  width: 100%;
-}
-form input {
-  border: 0;
-  padding: 10px;
-  width: 90%;
-  margin-right: 0.5%;
-}
-form button {
-  width: 9%;
-  background: rgb(220, 10, 220); /* rgb(130, 224, 255); */
-  border: none;
-  padding: 10px;
-}
-.messages {
-  list-style-type: none;
+
+
+#restart {
+  background-color: green;
+  border: 2;
+  color: #fefbef;
+  font-family: 'Open Sans', sans-serif;
+  font-weight: 600;
+  line-height: 2;
+  margin-top: 1.5rem;
+  width: 20%; /* Large, mobile-friendly touch target */
+  padding: 20px; /* Large, mobile-friendly touch target */
+
   margin: 0;
-  padding: 0;
+  position: absolute;
+  -ms-transform: translateX(130%);
+  transform: translateX(130%);
+
+ 
 }
-.messages li {
-  padding: 5px 10px;
+
+#restart:hover {
+ 
+ border-color: black;
+ border-width: 3px;
 }
-.messages li:nth-child(odd) {
-  background: #eee;
+
+#gameMode {
+  background-color: orange;
+  border: 2;
+  color: #fefbef;
+  font-family: 'Open Sans', sans-serif;
+  font-weight: 600;
+  line-height: 2;
+  margin-top: 1.5rem;
+  width: 20%; /* Large, mobile-friendly touch target */
+  padding: 20px; /* Large, mobile-friendly touch target */
+
+  margin: 0;
+  position: absolute;
+  -ms-transform: translateX(270%);
+  transform: translateX(270%);
+
+ 
+}
+
+
+#gameMode:hover {
+ 
+  border-color: black;
+  border-width: 3px;
 }

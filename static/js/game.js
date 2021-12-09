@@ -263,7 +263,7 @@ $(function () {
 				let a = i + 1 + " wants to restart...";
 				ctx.fillStyle = "black";
 				ctx.font = "10px Arial";
-				ctx.fillText(a, boxes[i].boundL-10, boxes[i].boundB+10);
+				ctx.fillText(a, boxes[i].boundL-20, boxes[i].boundB+10);
 			}
 				
 		}
