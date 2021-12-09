@@ -18,7 +18,7 @@ app.get("/", function (req, res) {
 });
 
 var clients = new Map();
-var clientId = 0;
+var clientId = 2;
 
 var maze = true;
 var tag = false;
@@ -569,11 +569,11 @@ function boxRestart(player)
         console.log("boxRestartMaze")
         if(player==1)
         {
-            return(new componentMaze(30, 0,   "blue",   10, 10, clientId, "box")); 
+            return(new componentMaze(30, 0,   "blue",   10, 10, boxes[0].player, "box")); 
         }
         if(player==2)
         {
-            return(new componentMaze(30, 200,  "purple",  10, 10, clientId, "box"));
+            return(new componentMaze(30, 200,  "purple",  10, 10, boxes[1].player, "box"));
         }
     }
 
@@ -582,10 +582,10 @@ function boxRestart(player)
     if(tag)
     {
 
-        box1Tag = new componentTag(20, 20,   "blue",   40, 40, clientId, boxesTag[0].tagger); 
-        box2Tag = new componentTag(440, 20,  "purple",    40, 40, clientId, boxesTag[1].tagger);
-        box3Tag = new componentTag(20, 440, "green",  40, 40, clientId, boxesTag[2].tagger); 
-        box4Tag = new componentTag(440, 440,  "orange", 40, 40, clientId, boxesTag[3].tagger);
+        box1Tag = new componentTag(20, 20,   "blue",   40, 40, boxesTag[0].player, boxesTag[0].tagger); 
+        box2Tag = new componentTag(440, 20,  "purple",    40, 40, boxesTag[1].player, boxesTag[1].tagger);
+        box3Tag = new componentTag(20, 440, "green",  40, 40, boxesTag[2].player, boxesTag[2].tagger); 
+        box4Tag = new componentTag(440, 440,  "orange", 40, 40, boxesTag[3].player, boxesTag[3].tagger);
 
         console.log("boxRestartTag")
         if(player==1)
@@ -653,46 +653,151 @@ function aKey(aSocket) {
     else return aSocket.id;
 }
 
+var playersAr = new Array(50);
+for(let i = 0; i < 50; i++)
+{
+    playersAr[i] = 0;
+}
+
 io.on("connection", function (socket) {
 
     if(maze)
     {    
         // remember this socket id
+        console.log(player1,player2);
         if(!player1)
         {
-            clientId = 1;
+            console.log("No player one... Filling spot")
             player1 = true;
             boxes[0] = boxRestart(1);        
-            io.emit("boxesMaze", { sender: "server", boxes: boxes, walls: walls, text: "Sending boxes from index.js" }); // io.emit sends to all
-
+            aKey = socket.id;
+            clients.set(aKey, { id: 1 });
+            console.log("connection: " + socket.id + " clientId: " + 1 + " key: " + aKey );
+            socket.emit("welcomeMaze", { id: 1, boxes: boxes });
+            playersAr[0] = 1;
         }
         else if(!player2)
         {
-            clientId = 2;
+            console.log("No player 2... Filling spot")
             player2 = true;
             boxes[1] = boxRestart(2);        
-            io.emit("boxesMaze", { sender: "server", boxes: boxes, walls: walls, text: "Sending boxes from index.js" }); // io.emit sends to all
+            aKey = socket.id;
+            clients.set(aKey, { id: 2 });
+            socket.emit("welcomeMaze", { id: 2, boxes: boxes });
+            playersAr[1] = 1;
+            console.log("connection: " + socket.id + " clientId: " + 2 + " key: " + aKey );
+
         }
         else
-            clientId += 1;
-
-        // var aKey = socket.handshake.address; // production ok, but testing difficult
-        aKey = socket.id;
-        clients.set(aKey, { id: clientId });
-        console.log("connection: " + socket.id + " clientId: " + clientId + " key: " + aKey );
-        socket.emit("welcomeMaze", { id: clientId, boxes: boxes });
-
-        //console.log(clientId);
-        if(clientId > 2)
         {
-            //dont let the do anything 
-            boxes.push(new componentMaze(0, 0,  "", 0, 0, clientId, 0));
+            console.log("player1 and player2 are here");
+            //console.log("clientID", clientId);
+            //clientId += 1;
+
+            for(let i = 0; i < playersAr.length; i++)
+            {
+                console.log(playersAr[i])
+                if(playersAr[i] == 0)
+                {
+                    aKey = socket.id;
+                    clients.set(aKey, { id: (i+1) });
+                    console.log("connection: " + socket.id + " clientId: " + (i+1) + " key: " + aKey );
+                    socket.emit("welcomeMaze", { id: (i+1), boxes: boxes });
+                    playersAr[i] = 1;
+                    boxes.push(new componentMaze(0, 0,  "", 0, 0, i+1, 0));
+                    break;
+                }
+            }
+
         }
+
 
         //Start the game
         io.emit("startMaze", {boxes: boxes, walls: walls}); // io.emit sends to all
         io.emit("boxesMaze", { sender: "server", boxes: boxes, walls: walls, text: "Sending boxes from index.js" }); // io.emit sends to all
 
+    }
+
+    if(tag)
+    {
+
+           
+        // remember this socket id
+        console.log(player1,player2);
+        if(!player1)
+        {
+            console.log("No player one... Filling spot")
+            player1 = true;
+            boxesTag[0] = boxRestart(1);        
+            aKey = socket.id;
+            clients.set(aKey, { id: 1 });
+            console.log("connection: " + socket.id + " clientId: " + 1 + " key: " + aKey );
+            socket.emit("welcomeTag", { id: 1, boxesTag: boxesTag });
+            playersAr[0] = 1;
+        }
+        else if(!player2)
+        {
+            console.log("No player 2... Filling spot")
+            player2 = true;
+            boxesTag[1] = boxRestart(2);        
+            aKey = socket.id;
+            clients.set(aKey, { id: 2 });
+            socket.emit("welcomeTag", { id: 2, boxesTag: boxesTag });
+            playersAr[1] = 1;
+            console.log("connection: " + socket.id + " clientId: " + 2 + " key: " + aKey );
+    
+        }
+        else if(!player3)
+        {
+            console.log("No player 3... Filling spot")
+            player3 = true;
+            boxesTag[2] = boxRestart(3);        
+            aKey = socket.id;
+            clients.set(aKey, { id: 3 });
+            socket.emit("welcomeTag", { id: 3, boxesTag: boxesTag });
+            playersAr[2] = 1;
+            console.log("connection: " + socket.id + " clientId: " + 3 + " key: " + aKey );
+    
+        }
+        else if(!player4)
+        {
+            console.log("No player 4... Filling spot")
+            player4 = true;
+            boxesTag[3] = boxRestart(4);        
+            aKey = socket.id;
+            clients.set(aKey, { id: 4 });
+            socket.emit("welcomeTag", { id: 4, boxesTag: boxesTag });
+            playersAr[3] = 1;
+            console.log("connection: " + socket.id + " clientId: " + 4 + " key: " + aKey );
+        }
+        else
+        {
+            console.log("player1234 are here");
+    
+            for(let i = 0; i < playersAr.length; i++)
+            {
+                console.log(playersAr[i])
+                if(playersAr[i] == 0)
+                {
+                    aKey = socket.id;
+                    clients.set(aKey, { id: (i+1) });
+                    console.log("connection: " + socket.id + " clientId: " + (i+1) + " key: " + aKey );
+                    socket.emit("welcomeTag", { id: (i+1), boxes: boxes });
+                    playersAr[i] = 1;
+                    boxes.push(new componentTag(0, 0,  "", 0, 0, i+1, 0));
+                    break;
+                }
+            }
+    
+        }
+    
+
+        //Start the game
+        io.emit("startTag", {boxesTag: boxesTag}); // io.emit sends to all
+        console.log("Starting Tag2" + boxesTag[0].color + " !");
+        io.emit("boxesTag", { sender: "server", boxesTag: boxesTag, text: "Sending boxesTag from index.js" }); // io.emit sends to all
+    
+    
     }
 
 
@@ -742,24 +847,45 @@ io.on("connection", function (socket) {
         var info = clients.get(socket.id);
         
         console.log(info.id + " disconnected");
-        if(info.id == 1)
-        {
-            player1 = false;
-        }
-        else if(info.id == 2)
-        {
-            player2 = false;
-        }
-        else if(info.id == 3)
-        {
-            player3 = false;
-        }
-        else if(info.id == 4)
-        {
-            player4 = false;
-        }
+        console.log("size",clients.size);
+     
+
         
-    
+            if(info.id == 1)
+            {
+                player1 = false;
+                playersAr[0] = 0;
+            }
+            else if(info.id == 2)
+            {
+                player2 = false;
+                playersAr[1] = 0;
+
+            }
+            else if(info.id == 3)
+            {
+                player3 = false;
+                playersAr[2] = 0;
+
+            }
+            else if(info.id == 4)
+            {
+                player4 = false;
+                playersAr[3] = 0;
+
+            }
+            else
+            {
+                playersAr[info.id-1] = 0;
+            }
+        
+
+
+        
+        
+ 
+        clients.delete(socket.id);
+
     });
 
     socket.on("startMaze", function (msg) {
@@ -828,60 +954,7 @@ io.on("connection", function (socket) {
         
     });
 
-    if(tag)
-    {
-
-        if(!player1)
-        {
-            clientId = 1;
-            player1 = true;
-            boxesTag[0] = boxRestart(1);        
-            io.emit("boxesTag", { sender: "server", boxesTag: boxesTag, text: "Sending boxes from index.js" }); // io.emit sends to all
-
-        }
-        else if(!player2)
-        {
-            clientId = 2;
-            player2 = true;
-            boxesTag[1] = boxRestart(2);        
-            io.emit("boxesTag", { sender: "server", boxesTag: boxesTag, text: "Sending boxes from index.js" }); // io.emit sends to all
-        }
-        else if(!player3)
-        {
-            clientId = 3;
-            player3 = true;
-            boxesTag[2] = boxRestart(3);        
-            io.emit("boxesTag", { sender: "server", boxesTag: boxesTag, text: "Sending boxes from index.js" }); // io.emit sends to all
-        }
-        else if(!player4)
-        {
-            clientId = 4;
-            player4 = true;
-            boxesTag[3] = boxRestart(4);        
-            io.emit("boxesTag", { sender: "server", boxesTag: boxesTag, text: "Sending boxes from index.js" }); // io.emit sends to all
-        }
-        else
-            clientId += 1;
-
-        //console.log(clientId);
-        if(clientId > 4)
-        {
-            //dont let them do anything 
-            boxesTag.push(new componentTag(0, 0,  "white", 0, 0, clientId, 0));
-        }
-
-        aKey = socket.id;
-        clients.set(aKey, { id: clientId });
-        console.log("connection: " + socket.id + " clientId: " + clientId + " key: " + aKey );
-        socket.emit("welcomeTag", { id: clientId, boxesTag: boxesTag });
-
-        //Start the game
-        io.emit("startTag", {boxesTag: boxesTag}); // io.emit sends to all
-        console.log("Starting Tag2" + boxesTag[0].color + " !");
-        io.emit("boxesTag", { sender: "server", boxesTag: boxesTag, text: "Sending boxesTag from index.js" }); // io.emit sends to all
     
-    
-    }
 
     socket.on("startTag", function (msg) {
         tag = true;

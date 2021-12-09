@@ -199,7 +199,7 @@ $(function () {
 		let  c = document.getElementById("p");
 
 		if(myId > 2 )
-			c.textContent = "You are just viewer (" + myId +  ")";
+			c.textContent = "You are viewer (" + (msg.id) +  ")";
 		else 
 			c.textContent = "You are player " + msg.id + " (" + msg.boxes[myId-1].color + ")";
 
